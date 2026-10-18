@@ -14,11 +14,18 @@
 
 #include <i2c.h>
 #include <lcd_driver.h>
+#include <systick.h>
 
 
 //  shifted to the right 
 #define LCD_SLAVE_ADDR_READ 0x4F >> 1
 #define LCD_SLAVE_ADDR_WRITE 0x4E >> 1
+
+// the wait times
+#define LCD_POWER_ON_DELAY 15
+#define LCD_FIRST_DELAY 5
+#define LCD_SECOND_DELAY 1
+#define LCD_CLEAR_DELAY 2
 
 /*
  * Sends one byte to the LCD as two 4-bit nibbles in a single I2C transaction.
@@ -72,19 +79,27 @@ void lcd_helper_function(uint8_t data, bool rs) {
  * Assumes i2c_master_init has been called first.
  */
 void lcd_driver_init() {
+    systick_delay(LCD_POWER_ON_DELAY); // wait for power on
     // 0 0 1 0 0 0 0 0  for 3 times
     // 0 0 1 0 0 0 0 0  for 1 time
     // clear lcd display with 0 0 0 0  0 0 0 1
 	lcd_helper_function(0x03, 0);
+    systick_delay(LCD_FIRST_DELAY);
     lcd_helper_function(0x03, 0);
+    systick_delay(LCD_SECOND_DELAY);
     lcd_helper_function(0x03, 0);
+    systick_delay(LCD_SECOND_DELAY);
     // switch to 4 bit mode
     lcd_helper_function(0x02, 0);
+    systick_delay(LCD_SECOND_DELAY);
     
 
     lcd_helper_function(0x28, 0);         // 4-bit, 2 lines
+    systick_delay(LCD_SECOND_DELAY);
     lcd_helper_function(0x0F, 0);         // display on, blinking cursor
+    systick_delay(LCD_SECOND_DELAY);
     lcd_helper_function(0x06, 0);         // entry mode
+    systick_delay(LCD_SECOND_DELAY);
     lcd_clear();                            // clear display
 }
 
@@ -143,5 +158,6 @@ void lcd_set_cursor(uint8_t row, uint8_t col){
 void lcd_clear() {
     // 0 0 0 0  0 0 0 1
     lcd_helper_function(0x01, 0);
+    systick_delay(LCD_CLEAR_DELAY);
     return;
 }
