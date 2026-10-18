@@ -10,6 +10,7 @@
 
 #include <gpio.h>
 #include <keypad_driver.h>
+#include <systick.h>
 
 //defining all the keypad connections to stm32
 #define KEYPAD_ROW3_PORT GPIO_C
@@ -27,6 +28,8 @@
 #define KEYPAD_COL1_PIN  3
 #define KEYPAD_COL3_PORT GPIO_B
 #define KEYPAD_COL3_PIN  5
+
+#define KEYPAD_DEBOUNCE_MS 50
 
 /*
  * Initializes the keypad driver.
@@ -64,7 +67,7 @@ void keypad_init() {
  * Args: none. Returns: the pressed key (0-9, *, #) or '\0' if none.
  * Assumes keypad_init has been called first.
  */
-char keypad_read() {
+char keypad_scan_raw() {
     for (int i = 0; i < 4; i++) {
         
         // intialize all rows as low
@@ -81,11 +84,8 @@ char keypad_read() {
         
         // columns and debouncing logic
         int d2_col2 = gpio_read(KEYPAD_COL2_PORT, KEYPAD_COL2_PIN);
-        for (int db = 0; db < 50000; db++);
         int d3_col1 = gpio_read(KEYPAD_COL1_PORT, KEYPAD_COL1_PIN);
-        for (int db = 0; db < 50000; db++);
         int d4_col3 = gpio_read(KEYPAD_COL3_PORT, KEYPAD_COL3_PIN);
-        for (int db = 0; db < 50000; db++);
 
         // return char on button based on col and row connection
         if (i == 0) {
@@ -109,4 +109,34 @@ char keypad_read() {
 
     // return null if nothing
     return '\0'; 
+}
+
+/**
+ * Reads the keypad and returns the pressed key after debouncing.
+ * Args: none. Returns: the pressed key (0-9, *, #) or '\0' if none.
+ * Assumes keypad_init has been called first.
+ */
+char keypad_read() {
+    static char stable_key = '\0';
+    static char candidate_key = '\0';
+    static uint32_t candidate_since = 0;
+
+    char raw_key = keypad_scan_raw();
+    uint32_t now = systick_get_ticks();
+
+    // if there was a change in the raw key, reset the candidate key and timestamp
+    if (raw_key != candidate_key) {
+        candidate_key = raw_key;
+        candidate_since = now;
+        return '\0';
+    } 
+
+    // once our key has remained the same for longer than keypad debounce period, we can consider it stable and return it
+    if (candidate_key != stable_key && (now - candidate_since) >= KEYPAD_DEBOUNCE_MS) {
+        stable_key = candidate_key;
+        if (stable_key != '\0') {
+            return stable_key;
+        }
+    }
+    return '\0';
 }
