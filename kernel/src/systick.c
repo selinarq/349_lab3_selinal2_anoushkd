@@ -34,6 +34,7 @@ typedef struct {
 static volatile uint32_t elapsed_ms = 0;
 
 void systick_init() {
+    
     // set the reload value
     // enable the counter
     // enable the SysTick interrupr

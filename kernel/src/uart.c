@@ -13,6 +13,7 @@
 #include <uart.h>
 #include <uart_polling.h>
 #include <nvic.h>
+#include <gpio.h>
 
 struct uart_reg_map {
     volatile uint32_t SR;   /**< Status Register */
@@ -36,14 +37,18 @@ struct uart_reg_map {
 #define RCC_APB1ENR_USART2 (1 << 17)
 
 /** @brief Enable bit for TX RX 2nd and 3rd bit */
-#define TXRX_EN (3 << 2) // 
-
+#define TXRX_EN (3 << 2) 
 #define RXNEIE_EN (1 << 5)
+#define TXEIE_EN (1 << 7)
+#define RXNE_EN (1 << 5)
+#define TXE_EN (1 << 7)
+#define TC_EN (1 << 6)
 
 /** @brief USARTDIV */
 #define USARTDIV (8 << 4) | 11   // 0x0000008B
 
 void uart_init(int baud){
+    (void) baud;
     // TX PA_2, alternate function pins, push pull, lowest speed rate, none, 1 2 3 (7) 15
     gpio_init(GPIO_A, 2, MODE_ALT, OUTPUT_PUSH_PULL, OUTPUT_SPEED_LOW, PUPD_NONE, ALT7);
 
@@ -85,8 +90,9 @@ char tx_buffer[BUFFER_SIZE];
 int tx_buf_head = 0;
 int tx_buf_tail = 0;
 
+//store char to send, adds to buffer
 int uart_put_byte(char c){
-  struct uart_reg_map *uart = UART2_BASE;
+    struct uart_reg_map *uart = UART2_BASE;
 
     int next = tx_buf_head + 1;
     if (next == BUFFER_SIZE) {
@@ -99,15 +105,17 @@ int uart_put_byte(char c){
 
     tx_buffer[tx_buf_head] = c;
     tx_buf_head = next;
-    uart->CR1 |= TXEIE;
+    uart->CR1 |= TXEIE_EN;
 
     return 0;
 }
 
 //initializing variables for buffer of recieving chars
-char tx_buffer[BUFFER_SIZE];
+char rx_buffer[BUFFER_SIZE];
 int rx_buf_head = 0;
 int rx_buf_tail = 0;
+
+//gets char that was already recieved
 int uart_get_byte(char *c){
   if (rx_buf_head == rx_buf_tail) {
         return -1;
@@ -123,10 +131,63 @@ int uart_get_byte(char *c){
     return 0;
 }
 
-void uart_irq_handler(){
+//takes char from buffer and sends through UART
+void USART2_TX_IRQHandler() {
+    struct uart_reg_map *uart = UART2_BASE;
+    uart->DR = tx_buffer[tx_buf_tail];
 
+    tx_buf_tail++;
+    if (tx_buf_tail == BUFFER_SIZE){
+      tx_buf_tail = 0;
+    }
 }
 
-void uart_flush(){
+//recieved char from buffer and puts in RX buffer
+void USART2_RX_IRQHandler() {
+    struct uart_reg_map *uart = UART2_BASE;
+    rx_buffer[rx_buf_head] = (char)uart->DR;
 
+    rx_buf_head++;
+    if (rx_buf_head == BUFFER_SIZE){
+      rx_buf_head = 0;
+    }
+}
+
+//TX or RX interrupt handler
+void USART2_IRQHandler() {
+    struct uart_reg_map *uart = UART2_BASE;
+
+    if ((uart->SR & RXNE_EN) && (uart->CR1 & RXNEIE_EN)) {
+        USART2_RX_IRQHandler();
+    }
+    if ((uart->SR & TXE_EN) && (uart->CR1 & TXEIE_EN)) {
+        USART2_TX_IRQHandler();
+    }
+
+    nvic_clear_pending(38);
+}
+
+//send all chars still in TX buffer
+void uart_flush(){
+    struct uart_reg_map *uart = UART2_BASE;
+    uart->CR1 &= ~TXEIE_EN;
+
+    //sned all remaining chars
+    while (tx_buf_head != tx_buf_tail) {
+        while (!(uart->SR & TXE_EN)){
+          //wait
+        };
+
+        uart->DR = tx_buffer[tx_buf_tail];
+
+        tx_buf_tail++;
+        if (tx_buf_tail == BUFFER_SIZE) {
+          tx_buf_tail = 0;
+        }
+    }
+    //wait for last char to be sent
+    while (!(uart->SR & TC_EN))
+    {
+      //wait
+    };
 }
