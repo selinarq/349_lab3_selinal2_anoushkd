@@ -79,7 +79,7 @@ void uart_init(int baud){
     uart->CR1 |= RXNEIE_EN;
 
     //clear odl requests and inteerupt CPU
-    nvic_clear_pending(38);
+    // nvic_clear_pending(38);
     nvic_irq(38, IRQ_ENABLE);
 
     return;
@@ -89,23 +89,26 @@ void uart_init(int baud){
 char tx_buffer[BUFFER_SIZE];
 int tx_buf_head = 0;
 int tx_buf_tail = 0;
+int tx_len = 0;
 
 //store char to send, adds to buffer
 int uart_put_byte(char c){
     struct uart_reg_map *uart = UART2_BASE;
+
+    uart->CR1 &= ~TXEIE_EN;
 
     int next = tx_buf_head + 1;
     if (next == BUFFER_SIZE) {
         next = 0;
     }
 
-    if (next == tx_buf_tail) {
+    if (tx_len == BUFFER_SIZE) {
         return -1;
     }
 
     tx_buffer[tx_buf_head] = c;
     tx_buf_head = next;
-    uart->CR1 |= TXEIE_EN;
+    tx_len++;
 
     return 0;
 }
@@ -114,19 +117,19 @@ int uart_put_byte(char c){
 char rx_buffer[BUFFER_SIZE];
 int rx_buf_head = 0;
 int rx_buf_tail = 0;
+int rx_len = 0;
+
 
 //gets char that was already recieved
 int uart_get_byte(char *c){
-  if (rx_buf_head == rx_buf_tail) {
+  if (rx_len == BUFFER_SIZE) {
         return -1;
     }
 
     *c = rx_buffer[rx_buf_tail];
 
-    rx_buf_tail++;
-    if (rx_buf_tail == BUFFER_SIZE) {
-        rx_buf_tail = 0;
-    }
+    rx_buf_tail = (rx_buf_tail + 1) % BUFFER_SIZE;
+    rx_len--;
 
     return 0;
 }
@@ -134,22 +137,23 @@ int uart_get_byte(char *c){
 //takes char from buffer and sends through UART
 void USART2_TX_IRQHandler() {
     struct uart_reg_map *uart = UART2_BASE;
-    uart->DR = tx_buffer[tx_buf_tail];
 
-    tx_buf_tail++;
-    if (tx_buf_tail == BUFFER_SIZE){
-      tx_buf_tail = 0;
+    if (tx_len > 0) {
+        uart->DR = tx_buffer[tx_buf_tail];
+        tx_buf_tail = (tx_buf_tail + 1) % BUFFER_SIZE;
+        tx_len--;
     }
+    
 }
 
 //recieved char from buffer and puts in RX buffer
 void USART2_RX_IRQHandler() {
     struct uart_reg_map *uart = UART2_BASE;
-    rx_buffer[rx_buf_head] = (char)uart->DR;
 
-    rx_buf_head++;
-    if (rx_buf_head == BUFFER_SIZE){
-      rx_buf_head = 0;
+    if (rx_len < BUFFER_SIZE) {
+        rx_buffer[rx_buf_head] = (char)uart->DR;
+        rx_buf_head = (rx_buf_head + 1) % BUFFER_SIZE;
+        rx_len++;
     }
 }
 
@@ -173,20 +177,20 @@ void uart_flush(){
     uart->CR1 &= ~TXEIE_EN;
 
     //sned all remaining chars
-    while (tx_buf_head != tx_buf_tail) {
-        while (!(uart->SR & TXE_EN)){
-          //wait
-        };
+    while (tx_len > 0) {
+        // while (!(uart->SR & TXE_EN)){
+        //   //wait
+        // };
 
-        uart->DR = tx_buffer[tx_buf_tail];
+        // uart->DR = tx_buffer[tx_buf_tail];
 
-        tx_buf_tail++;
-        if (tx_buf_tail == BUFFER_SIZE) {
-          tx_buf_tail = 0;
-        }
+        // tx_buf_tail++;
+        // if (tx_buf_tail == BUFFER_SIZE) {
+        //   tx_buf_tail = 0;
+        // }
     }
     //wait for last char to be sent
-    while (!(uart->SR & TC_EN))
+    while (!(uart->SR & RXNE_EN))
     {
       //wait
     };
