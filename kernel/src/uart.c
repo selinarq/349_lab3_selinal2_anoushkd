@@ -109,6 +109,7 @@ int uart_put_byte(char c){
     tx_buffer[tx_buf_head] = c;
     tx_buf_head = next;
     tx_len++;
+    uart->CR1 |= TXEIE_EN;
 
     return 0;
 }
@@ -142,6 +143,10 @@ void USART2_TX_IRQHandler() {
         uart->DR = tx_buffer[tx_buf_tail];
         tx_buf_tail = (tx_buf_tail + 1) % BUFFER_SIZE;
         tx_len--;
+    }
+
+    if (tx_len == 0) {
+        uart->CR1 &= ~TXEIE_EN;   // nothing left to send, stop TXE interrupts
     }
     
 }
@@ -178,19 +183,17 @@ void uart_flush(){
 
     //sned all remaining chars
     while (tx_len > 0) {
-        // while (!(uart->SR & TXE_EN)){
-        //   //wait
-        // };
+        while (!(uart->SR & TXE_EN)){
+          //wait
+        };
 
-        // uart->DR = tx_buffer[tx_buf_tail];
+        uart->DR = tx_buffer[tx_buf_tail];
 
-        // tx_buf_tail++;
-        // if (tx_buf_tail == BUFFER_SIZE) {
-        //   tx_buf_tail = 0;
-        // }
+        tx_buf_tail = (tx_buf_tail + 1) % BUFFER_SIZE;
+        tx_len--;
     }
     //wait for last char to be sent
-    while (!(uart->SR & RXNE_EN))
+    while (!(uart->SR & TC_EN))
     {
       //wait
     };
