@@ -10,8 +10,8 @@
 .thumb_func
 .global enter_user_mode
 enter_user_mode:
-  LDR R0, __psp_stack_top
-  MSR PSP, R0
+  ldr R0, =__psp_stack_top
+  msr PSP, R0
   b _crt0
 
 
