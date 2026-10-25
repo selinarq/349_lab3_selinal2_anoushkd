@@ -5,6 +5,7 @@
 #include <servo.h>
 
 int main(UNUSED int argc, UNUSED char const *argv[]){
+  fflush(stdout);
   printf("Hello World from User.\n");
   return 0;
 }

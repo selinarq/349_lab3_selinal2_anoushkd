@@ -165,13 +165,9 @@ zero_bss_done:
   bl kernel_main
   bkpt
 
-@ this is dead code i think
-@ .thumb_func
-@ .global _sys_tick_asm_
-@ _sys_tick_asm_:
-@  bkpt
-
 .thumb_func
 .global _svc_asm_handler_
 _svc_asm_handler_:
+  mrs r0, psp          @ r0 = pointer to the user's stacked frame (first C argument)
+  b svc_c_handler      @ return performs the exception return to user mode
   bkpt

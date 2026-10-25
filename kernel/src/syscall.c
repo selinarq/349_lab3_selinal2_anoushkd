@@ -10,12 +10,30 @@
 
 #include <unistd.h>
 #include <syscall.h>
+#include <printk.h>
+#include <uart.h>
+#include <lcd_driver.h>
 
-#define UNUSED __attribute__((unused))
+extern char __heap_low;
+extern char __heap_top;
 
-void *sys_sbrk(UNUSED int incr){
-  return NULL;
+void *sys_sbrk(int incr){
+  static char *program_break = &__heap_low;   // persists between calls
+  // variable keep track of current heap position
+  
+  char *old_break = program_break; // store the old break value
+
+  if (program_break + incr > &__heap_top) {
+    return (void *)-1; // Not enough memory
+  }
+  if (incr >= 0) {
+    program_break += incr;
+    return (void *)(old_break);
+  } else {
+    return (void *)-1; // Decrementing the heap is not supported
+  }
 }
+
 
 //print characters from user program into terminal through UART
 int sys_write(int file, char *ptr, int len){
@@ -81,7 +99,8 @@ void sys_exit(int status){
   // display the exit code on the LED screen and sleep with interrupts disabled
   lcd_clear();
   lcd_set_cursor(0, 0);
-  lcd_print("exit(%d)", status);
+  char status_text[2] = { (char)(status + '0'), '\0' };
+  lcd_print(status_text);
 
   __asm volatile("cpsid i");         // disable interrupts
   while (1) {

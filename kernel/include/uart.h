@@ -21,4 +21,9 @@ int uart_write( int file, char *ptr, int len );
 
 int uart_read(int file, char *ptr, int len );
 
+/**
+ * @brief Sends all bytes remaining in the TX buffer by polling.
+ */
+void uart_flush(void);
+
 #endif /* _UART_H_ */

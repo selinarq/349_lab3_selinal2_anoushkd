@@ -51,6 +51,8 @@ int kernel_main( void ) {
   lcd_driver_init();
   lcd_clear();
 
+  enter_user_mode();
+
   // start by setting all rows for keypad high 
   gpio_set(KEYPAD_ROW3_PORT, KEYPAD_ROW3_PIN);
   gpio_set(KEYPAD_ROW2_PORT, KEYPAD_ROW2_PIN);
@@ -65,9 +67,10 @@ int kernel_main( void ) {
   while (1) {
 
     
-    systick_delay(1000);
-    printk("Interrupt!\n");
+    // systick_delay(1000);
+    // printk("Interrupt!\n");
     
+
     // read keypad input always and print pressed key
     char key = keypad_read();
 
