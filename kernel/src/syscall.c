@@ -75,10 +75,16 @@ int sys_read(int file, char *ptr, int len){
 }
 
 void sys_exit(int status){
-    printk("Exit status: %d\n", status);
-    uart_flush();
+  printk("exit(%d)\n", status);
+  // flush the UART buffer
+  uart_flush();
+  // display the exit code on the LED screen and sleep with interrupts disabled
+  lcd_clear();
+  lcd_set_cursor(0, 0);
+  lcd_print("exit(%d)", status);
 
-    // Display status on LED screen
-    // Disable interrupts
-    // Sleep forever
+  __asm volatile("cpsid i");         // disable interrupts
+  while (1) {
+      __asm volatile("wfi");         // sleep; nothing can wake us
+  }
 }
