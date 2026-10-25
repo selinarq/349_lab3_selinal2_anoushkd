@@ -17,13 +17,68 @@ void *sys_sbrk(UNUSED int incr){
   return NULL;
 }
 
-int sys_write(UNUSED int file, UNUSED char *ptr, UNUSED int len){
-  return -1;
+//print characters from user program into terminal through UART
+int sys_write(int file, char *ptr, int len){
+    //only support stdout, can't write anywhere else
+    if (file != 1)
+        return -1;
+    //send each char to buffer
+    for (int i = 0; i < len; i++) {
+        while (uart_put_byte(ptr[i]) == -1){
+          //wait
+        }
+    }
+    return len;
 }
 
-int sys_read(UNUSED int file, UNUSED char *ptr, UNUSED int len){
-  return -1;
+//chars from UART and stores in array so program can use them
+int sys_read(int file, char *ptr, int len){
+    if (file != 0) return -1;
+
+    //how many chars read and stored
+    int count = 0;
+    char c;
+
+    while (count < len) {
+      //takes char from RX buffer and checks if succesful
+        if (uart_get_byte(&c) == 0) {
+            if (c == 4){
+                break;
+            }
+
+            if (c == '\b') {
+                if (count > 0) {
+                    count--;
+                    uart_put_byte('\b');
+                    uart_put_byte(' ');
+                    uart_put_byte('\b');
+                }
+            }
+            //sotre char and display in terminal
+            else {
+              //change return to enter
+                if (c == '\r'){
+                    c = '\n';
+                }
+                ptr[count] = c;
+                count++;
+                //sned char back to terminal so user can see what is typed
+                uart_put_byte(c);
+                if (c == '\n'){
+                    break;
+                }
+            }
+        }
+    }
+
+    return count;
 }
 
-void sys_exit(UNUSED int status){
+void sys_exit(int status){
+    printk("Exit status: %d\n", status);
+    uart_flush();
+
+    // Display status on LED screen
+    // Disable interrupts
+    // Sleep forever
 }
