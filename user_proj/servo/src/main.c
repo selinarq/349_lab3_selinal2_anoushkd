@@ -1,10 +1,11 @@
 #include <stdio.h>
-
-#define UNUSED __attribute__((unused))
-
+#include <unistd.h>
+#include <stdlib.h>
 #include <servo.h>
 
-int main(UNUSED int argc, UNUSED char const *argv[]){
+int main(int argc, char const *argv[]){
+  (void)argc;
+  (void)argv;
   fflush(stdout);
   printf("Hello World from User.\n");
 

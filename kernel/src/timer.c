@@ -10,8 +10,14 @@
 
 #include <unistd.h>
 #include <timer.h>
+#include <rcc.h>
+#include <printk.h>
 
 #define UNUSED __attribute__((unused))
+#define TIM_EN_2 0
+#define TIM_EN_3 1
+#define TIM_EN_4 2
+#define TIM_EN_5 3
 
 /** @brief tim2_5 */
 struct tim2_5 {
@@ -36,20 +42,55 @@ struct tim2_5 {
 
 struct tim2_5* const timer_base[] = {(void *)0x0,   // N/A - Don't fill out
                                      (void *)0x0,   // N/A - Don't fill out
-                                     (void *)-1,    // TODO: fill out address for TIMER 2
-                                     (void *)-1,    // TODO: fill out address for TIMER 3
-                                     (void *)-1,    // TODO: fill out address for TIMER 4
-                                     (void *)-1};   // TODO: fill out address for TIMER 5
+                                     (void *)0x40000000,  // TIM2
+                                     (void *)0x40000400,  // TIM3
+                                     (void *)0x40000800,  // TIM4
+                                     (void *)0x40000C00}; // TIM5
 
 
 void timer_init(UNUSED int timer, UNUSED uint32_t prescalar, UNUSED uint32_t period) {
 
 }
 
-void timer_disable(UNUSED int timer) {
-
+void timer_disable(int timer) {
+  struct rcc_reg_map *rcc = RCC_BASE;
+  switch (timer) {
+    case 2:
+      rcc->apb1_enr &= ~(1 << TIM_EN_2);
+      break;
+    case 3:
+      rcc->apb1_enr &= ~(1 << TIM_EN_3);
+      break;
+    case 4:
+      rcc->apb1_enr &= ~(1 << TIM_EN_4);
+      break;
+    case 5:
+      rcc->apb1_enr &= ~(1 << TIM_EN_5);
+      break;
+    default:
+      printk("error");
+      break;
+  }
 }
 
-void timer_clear_interrupt_bit(UNUSED int timer) {
+void timer_clear_interrupt_bit(int timer) {
+  struct rcc_reg_map *rcc = RCC_BASE;
+  switch (timer) {
+    case 2:
+      rcc->apb1_enr |= (1 << TIM_EN_2);
+      break;
+    case 3:
+      rcc->apb1_enr |= (1 << TIM_EN_3);
+      break;
+    case 4:
+      rcc->apb1_enr |= (1 << TIM_EN_4);
+      break;
+    case 5:
+      rcc->apb1_enr |= (1 << TIM_EN_5);
+      break;
+    default:
+      printk("error");
+      break;
+  }
 
 }
