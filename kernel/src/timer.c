@@ -13,12 +13,7 @@
 #include <rcc.h>
 #include <printk.h>
 
-#define UNUSED __attribute__((unused))
-#define TIM_2 2
-#define TIM_3 3 
-#define TIM_4 4 
-#define TIM_5 5 
-
+#define TIM_BASE (struct tim2_5 *) 0x40000000
 #define TIM_EN_2 0
 #define TIM_EN_3 1
 #define TIM_EN_4 2
@@ -55,8 +50,34 @@ struct tim2_5* const timer_base[] = {(void *)0x0,   // N/A - Don't fill out
                                      (void *)0x40000C00}; // TIM5
 
 
-void timer_init(UNUSED int timer, UNUSED uint32_t prescalar, UNUSED uint32_t period) {
+void timer_init(int timer, uint32_t prescalar, uint32_t period) {
+  struct rcc_reg_map *rcc = RCC_BASE;
+  if (timer < 2 || timer > 5 || prescalar==0 || period==0){
+    return;
+  }
+  switch (timer) {
+    case 2:
+      rcc->apb1_enr |= (1 << TIM_EN_2);
+      break;
+    case 3:
+      rcc->apb1_enr |= (1 << TIM_EN_3);
+      break;
+    case 4:
+      rcc->apb1_enr |= (1 << TIM_EN_4);
+      break;
+    case 5:
+      rcc->apb1_enr |= (1 << TIM_EN_5);
+      break;
+    default:
+      printk("error");
+      break;
+  }
 
+  struct tim2_5_map *tim2_5 = TIM_BASE;
+  tim->cr1 |= 1;
+  tim->dier |= 1;
+  tim->psc = prescalar - 1;
+  tim->arr = period - 1;
 }
 
 void timer_disable(int timer) {
