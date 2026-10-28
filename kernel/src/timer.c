@@ -14,10 +14,17 @@
 #include <printk.h>
 
 #define UNUSED __attribute__((unused))
+#define TIM_2 2
+#define TIM_3 3 
+#define TIM_4 4 
+#define TIM_5 5 
+
 #define TIM_EN_2 0
 #define TIM_EN_3 1
 #define TIM_EN_4 2
 #define TIM_EN_5 3
+/** @brief Update interrupt flag (UIF) bit in the timer status register. */
+#define TIM_SR_UIF  (1 << 0)
 
 /** @brief tim2_5 */
 struct tim2_5 {
@@ -55,42 +62,25 @@ void timer_init(UNUSED int timer, UNUSED uint32_t prescalar, UNUSED uint32_t per
 void timer_disable(int timer) {
   struct rcc_reg_map *rcc = RCC_BASE;
   switch (timer) {
-    case 2:
+    case TIM_2:
       rcc->apb1_enr &= ~(1 << TIM_EN_2);
       break;
-    case 3:
+    case TIM_3:
       rcc->apb1_enr &= ~(1 << TIM_EN_3);
       break;
-    case 4:
+    case TIM_4:
       rcc->apb1_enr &= ~(1 << TIM_EN_4);
       break;
-    case 5:
+    case TIM_5:
       rcc->apb1_enr &= ~(1 << TIM_EN_5);
       break;
     default:
-      printk("error");
       break;
   }
 }
 
 void timer_clear_interrupt_bit(int timer) {
-  struct rcc_reg_map *rcc = RCC_BASE;
-  switch (timer) {
-    case 2:
-      rcc->apb1_enr |= (1 << TIM_EN_2);
-      break;
-    case 3:
-      rcc->apb1_enr |= (1 << TIM_EN_3);
-      break;
-    case 4:
-      rcc->apb1_enr |= (1 << TIM_EN_4);
-      break;
-    case 5:
-      rcc->apb1_enr |= (1 << TIM_EN_5);
-      break;
-    default:
-      printk("error");
-      break;
+  if (TIM_2 <= timer && timer <= TIM_5) {
+    timer_base[timer]->sr &= ~TIM_SR_UIF; 
   }
-
 }
