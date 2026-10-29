@@ -3,24 +3,44 @@
 #include <stdlib.h>
 #include <servo.h>
 
+//user interface to type in commands to control servo
 int main(int argc, char const *argv[]){
-  (void)argc;
-  (void)argv;
-  fflush(stdout);
-  printf("Hello World from User.\n");
+  //store commands in array
+  char command[50];
+  int channel;
+  int angle;
 
-  char input[10];
-  write(1, "Type: ", 6);
-  //user types in their input, kernel reads these characters
-  int n = read(0, input, 10);
-  //print to terminal what user typed
-  write(1, input, n);
+  printf("Welcome to Servo Controller!\n");
+  printf("Commands\n");
+  printf("enable <ch>: Enable servo channel\n");
+  printf("disable <ch>: Disable servo channel\n");
+  printf("set <ch> <angle>: Set servo angle\n");
 
-  if (sbrk(1) == (void *)-1){
-    write(1, "failed\n", 7);
-  }
-  else{
-    write(1, "works\n", 6);
+  while (1) {
+    //read string word
+    scanf("%49s", command);
+
+    if (strcmp(command, "enable") == 0) {
+      if (scanf("%d", &channel) == 1)
+        servo_enable(channel);
+      else
+        printf("Invalid command\n");
+    }
+    else if (strcmp(command, "disable") == 0) {
+      if (scanf("%d", &channel) == 1)
+        servo_disable(channel);
+      else
+        printf("Invalid command\n");
+    }
+    else if (strcmp(command, "set") == 0) {
+      if (scanf("%d %d", &channel, &angle) == 2 && angle >= 0 && angle <= 180)
+        servo_set(channel, angle);
+      else
+        printf("Invalid command\n");
+    }
+    else {
+      printf("Invalid command\n");
+    }
   }
   return 0;
 }
