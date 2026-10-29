@@ -32,9 +32,11 @@ int main(int argc, char const *argv[]){
       if (sscanf(buffer, "enable %d\r", &channel) == 1) {
         servo_enable(channel, 1);
         printf("enabled!\n");
+
       } else if (sscanf(buffer, "disable %d\r", &channel) == 1) {
         servo_enable(channel, 0);
         printf("disabled!\n");
+
       } else if (sscanf(buffer, "set %d %d\r", &channel, &angle) == 2) {
         if (angle < 0 || angle > 180) {
           printf("3: Invalid command\n");
@@ -43,7 +45,7 @@ int main(int argc, char const *argv[]){
           printf("Set: %d %d\n", channel, angle);
         }
       } else {
-        printf("Else: Invalid command\n");
+        printf("Invalid command\n");
       }
     }
     fflush(stdout);

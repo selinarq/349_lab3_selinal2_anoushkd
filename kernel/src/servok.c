@@ -107,7 +107,7 @@ int sys_servo_enable(uint8_t channel, uint8_t enabled) {
                 OUTPUT_SPEED_LOW, PUPD_NONE, ALT0);
     }
     timer_init(SERVO_TIMER, SERVO_PRESCALER, SERVO_TICK_US);
-    printk("we are here\n");
+  
     nvic_irq(SERVO_TIMER_IRQ, IRQ_ENABLE);
     timer_running = 1;
   }
@@ -130,7 +130,7 @@ int sys_servo_set(uint8_t channel, uint8_t angle){
   if (channel < 1 || channel > 2) {
     return -1;
   }
-  printk("i want to go \n");
+
   uint32_t span = SERVO_MAX_TICKS - SERVO_MIN_TICKS;
   pulse_ticks[index] = SERVO_MIN_TICKS
                      + (angle * span + SERVO_MAX_ANGLE / 2) / SERVO_MAX_ANGLE;
