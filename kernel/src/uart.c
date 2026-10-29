@@ -95,19 +95,14 @@ int tx_len = 0;
 int uart_put_byte(char c){
     struct uart_reg_map *uart = UART2_BASE;
 
-    uart->CR1 &= ~TXEIE_EN;
-
-    int next = tx_buf_head + 1;
-    if (next == BUFFER_SIZE) {
-        next = 0;
-    }
-
     if (tx_len == BUFFER_SIZE) {
         return -1;
     }
 
+    uart->CR1 &= ~TXEIE_EN;
+
     tx_buffer[tx_buf_head] = c;
-    tx_buf_head = next;
+    tx_buf_head = (tx_buf_head + 1) % BUFFER_SIZE;
     tx_len++;
     uart->CR1 |= TXEIE_EN;
 
@@ -123,7 +118,7 @@ int rx_len = 0;
 
 //gets char that was already recieved
 int uart_get_byte(char *c){
-  if (rx_len == BUFFER_SIZE) {
+  if (rx_len == 0) {
         return -1;
     }
 

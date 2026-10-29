@@ -73,7 +73,7 @@ void timer_init(int timer, uint32_t prescalar, uint32_t period) {
       break;
   }
 
-  struct tim2_5_map *tim2_5 = TIM_BASE;
+  struct tim2_5 *tim = timer_base[timer];
   tim->cr1 |= 1;
   tim->dier |= 1;
   tim->psc = prescalar - 1;
@@ -83,16 +83,16 @@ void timer_init(int timer, uint32_t prescalar, uint32_t period) {
 void timer_disable(int timer) {
   struct rcc_reg_map *rcc = RCC_BASE;
   switch (timer) {
-    case TIM_2:
+    case 2:
       rcc->apb1_enr &= ~(1 << TIM_EN_2);
       break;
-    case TIM_3:
+    case 3:
       rcc->apb1_enr &= ~(1 << TIM_EN_3);
       break;
-    case TIM_4:
+    case 4:
       rcc->apb1_enr &= ~(1 << TIM_EN_4);
       break;
-    case TIM_5:
+    case 5:
       rcc->apb1_enr &= ~(1 << TIM_EN_5);
       break;
     default:
@@ -101,7 +101,7 @@ void timer_disable(int timer) {
 }
 
 void timer_clear_interrupt_bit(int timer) {
-  if (TIM_2 <= timer && timer <= TIM_5) {
+  if (2 <= timer && timer <= 5) {
     timer_base[timer]->sr &= ~TIM_SR_UIF; 
   }
 }
