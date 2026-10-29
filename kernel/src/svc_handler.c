@@ -44,7 +44,7 @@ void svc_c_handler(uint32_t *frame) {
     break; 
   
   case SVC_READ:
-    frame[0] = (uint32_t)sys_write((int)frame[0], (char*)frame[1], (int)frame[2]);
+    frame[0] = (uint32_t)sys_read((int)frame[0], (char*)frame[1], (int)frame[2]);
     break;
 
   case SVC_EXIT:
@@ -94,9 +94,11 @@ void svc_c_handler(uint32_t *frame) {
     break;
 
   case SVC_SERVO_ENABLE:
+    frame[0] = (uint32_t)sys_servo_enable((int)frame[0], (int)frame[1]);
     break;
 
   case SVC_SERVO_SET:
+    frame[0] = (uint32_t)sys_servo_set((int)frame[0], (int)frame[1]);
     break;
 
   default:

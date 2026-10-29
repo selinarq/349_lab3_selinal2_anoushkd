@@ -14,6 +14,7 @@
 #include <systick.h>
 #include <timer.h>
 #include <nvic.h>
+#include <printk.h>
 
 #define PULSE_FREQUENCY 20
 #define SERVO_PORT GPIO_A
@@ -26,7 +27,7 @@
 #define SERVO_TIMER_IRQ       29
 
 //16 MHz / 16 = 1 MHz timer clock
-#define SERVO_PRESCALER       16
+#define SERVO_PRESCALER       15
 
 // microseconds between timer interrupts
 #define SERVO_TICK_US         20u
@@ -56,7 +57,7 @@
 #define SERVO_CENTER_TICKS    ((SERVO_MIN_TICKS + SERVO_MAX_TICKS) / 2)
 
 /** @brief Pins of the two PWM outputs; check against the schematic. */
-static const uint8_t servo_pins[NUM_SERVOS] = {4, 5};
+static const uint8_t servo_pins[NUM_SERVOS] = {1, 4};
 
 // array that shows if channel is enabled or disabled
 static volatile uint8_t  servo_enabled[NUM_SERVOS];
@@ -75,7 +76,7 @@ void TIM3_IRQHandler(void) {
 
   for (int i = 0; i < NUM_SERVOS; i++) {
     if (servo_enabled[i] && period_tick < pulse_ticks[i]) {
-        gpio_set(SERVO_PORT, servo_pins[i]);
+      gpio_set(SERVO_PORT, servo_pins[i]);
     } else {
       gpio_clr(SERVO_PORT, servo_pins[i]);
     }
@@ -106,6 +107,7 @@ int sys_servo_enable(uint8_t channel, uint8_t enabled) {
                 OUTPUT_SPEED_LOW, PUPD_NONE, ALT0);
     }
     timer_init(SERVO_TIMER, SERVO_PRESCALER, SERVO_TICK_US);
+    printk("we are here\n");
     nvic_irq(SERVO_TIMER_IRQ, IRQ_ENABLE);
     timer_running = 1;
   }
@@ -128,7 +130,7 @@ int sys_servo_set(uint8_t channel, uint8_t angle){
   if (channel < 1 || channel > 2) {
     return -1;
   }
-
+  printk("i want to go \n");
   uint32_t span = SERVO_MAX_TICKS - SERVO_MIN_TICKS;
   pulse_ticks[index] = SERVO_MIN_TICKS
                      + (angle * span + SERVO_MAX_ANGLE / 2) / SERVO_MAX_ANGLE;

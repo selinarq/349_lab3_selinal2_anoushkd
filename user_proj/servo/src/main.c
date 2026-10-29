@@ -2,11 +2,18 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <servo.h>
+#include <string.h>
+
+
+#define NUM_CHANNELS 2
+
 
 //user interface to type in commands to control servo
 int main(int argc, char const *argv[]){
+  (void) argc;
+  (void) *argv;
+
   //store commands in array
-  char command[50];
   int channel;
   int angle;
 
@@ -16,31 +23,31 @@ int main(int argc, char const *argv[]){
   printf("disable <ch>: Disable servo channel\n");
   printf("set <ch> <angle>: Set servo angle\n");
 
+  char buffer[128];
+
   while (1) {
     //read string word
-    scanf("%49s", command);
-
-    if (strcmp(command, "enable") == 0) {
-      if (scanf("%d", &channel) == 1)
-        servo_enable(channel);
-      else
-        printf("Invalid command\n");
+    int length = read(STDIN_FILENO, buffer, 128);
+    if (length > 0) {
+      if (sscanf(buffer, "enable %d\r", &channel) == 1) {
+        servo_enable(channel, 1);
+        printf("enabled!\n");
+      } else if (sscanf(buffer, "disable %d\r", &channel) == 1) {
+        servo_enable(channel, 0);
+        printf("disabled!\n");
+      } else if (sscanf(buffer, "set %d %d\r", &channel, &angle) == 2) {
+        if (angle < 0 || angle > 180) {
+          printf("3: Invalid command\n");
+        } else {
+          servo_set(channel, angle);
+          printf("Set: %d %d\n", channel, angle);
+        }
+      } else {
+        printf("Else: Invalid command\n");
+      }
     }
-    else if (strcmp(command, "disable") == 0) {
-      if (scanf("%d", &channel) == 1)
-        servo_disable(channel);
-      else
-        printf("Invalid command\n");
-    }
-    else if (strcmp(command, "set") == 0) {
-      if (scanf("%d %d", &channel, &angle) == 2 && angle >= 0 && angle <= 180)
-        servo_set(channel, angle);
-      else
-        printf("Invalid command\n");
-    }
-    else {
-      printf("Invalid command\n");
-    }
+    fflush(stdout);
   }
+
   return 0;
 }

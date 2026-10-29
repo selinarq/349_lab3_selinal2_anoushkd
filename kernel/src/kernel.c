@@ -95,6 +95,7 @@ int kernel_main( void ) {
     
     systick_delay(1000);
     printk("Interrupt!\n");
+    enter_user_mode();
     
 
     // read keypad input always and print pressed key
