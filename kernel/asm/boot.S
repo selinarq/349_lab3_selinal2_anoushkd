@@ -57,7 +57,7 @@ ivt:
 .word   spin                /* 41 IRQ25 TIM1_UP */
 .word   spin                /* 42 IRQ26 TIM1_TRG_COM */
 .word   spin                /* 43 IRQ27 TIM1_CC   */
-.word   spin                /* 44 IRQ28 TIM2   */
+.word   TIM2_IRQHandler     /* 44 IRQ28 TIM2   */
 .word   spin                /* 45 IRQ29 TIM3 */
 .word   spin                /* 46 IRQ30 TIM5 */
 .word   spin                /* 47 IRQ31 I2C1_EV   */
