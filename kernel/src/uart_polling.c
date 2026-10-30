@@ -51,10 +51,6 @@ void uart_polling_init (int baud){
 
     struct uart_reg_map *uart = UART2_BASE;
 
-    /* configure GPIOA pins for PA2/PA3 as AF, ensure gpio_init() called */
-    // struct uart_reg_map *uart = UART2_BASE;
-    // uart->CR1 |= UART_EN;
-
     // written into the BRR register
     uart->BRR = USARTDIV;
 

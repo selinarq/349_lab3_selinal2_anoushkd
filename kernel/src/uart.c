@@ -62,10 +62,6 @@ void uart_init(int baud){
 
     struct uart_reg_map *uart = UART2_BASE;
 
-    /* configure GPIOA pins for PA2/PA3 as AF, ensure gpio_init() called */
-    // struct uart_reg_map *uart = UART2_BASE;
-    // uart->CR1 |= UART_EN;
-
     // written into the BRR register
     uart->BRR = USARTDIV;
 
@@ -79,7 +75,6 @@ void uart_init(int baud){
     uart->CR1 |= RXNEIE_EN;
 
     //clear odl requests and inteerupt CPU
-    // nvic_clear_pending(38);
     nvic_irq(38, IRQ_ENABLE);
 
     return;

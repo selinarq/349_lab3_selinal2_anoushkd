@@ -86,13 +86,9 @@ int kernel_main( void ) {
   timer_init(TIMER, PRESCALAR, PERIOD);
   nvic_irq(TIM2_IRQ_NUM, IRQ_ENABLE);
 
-  printk("This runs...\n");
-  
   
   uint8_t cursor_row = 0;
   while (1) {
-
-    
     systick_delay(1000);
     printk("Interrupt!\n");
     enter_user_mode();
